@@ -8,12 +8,13 @@ def is_hic(filename, **kwargs):
     return filename.endswith('.hic')
 
 
-@data_factory(label='Hi-C data laoder', identifier=is_hic)
+@data_factory(label='Hi-C data loader', identifier=is_hic)
 def read_hic(filename):
     """Read a HiC file into glue
 
     Need a custom UI or something to specify parameters
-    This just hard-codes some sensible defaults.
+    This just hard-codes some sensible defaults for the
+    test dataset (chr3 and other parameters for ChIA-PET)
     """
     hic_data = strawC.strawC("observed", "NONE", filename, "3", "3", "BP", 50000)
 

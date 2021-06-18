@@ -10,14 +10,14 @@ __all__ = ['is_hic', 'read_hic']
 
 def is_hic(filename, **kwargs):
     try:
-        _ = straw_module.read_metadata(filename,verbose=0)
+        _ = straw_module.read_metadata(filename, verbose=0)
     except NameError:  # straw module throws this (incorrect) error with malformed .hic
         return False
     return True
 
 
 @data_factory(label='Hi-C data loader', identifier=is_hic)
-def read_hic(filename, chr1='ALL', chr2='ALL', resolution=None):
+def read_hic(filename, chr1='1', chr2='1', resolution=None):
     """Read a HiC file into glue
 
     Need a custom UI or something to specify parameters

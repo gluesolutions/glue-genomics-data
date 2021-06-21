@@ -24,7 +24,7 @@ def read_hic(filename, chr1='1', chr2='1', resolution=None):
     This just hard-codes some sensible defaults for the
     test dataset (chr3 and other parameters for ChIA-PET)
     """
-    metadata = straw_module.read_metadata(filename,verbose=0)
+    metadata = straw_module.read_metadata(filename, verbose=0)
     max_resolution = metadata['Base pair-delimited resolutions'][0]  # This is true for sample data. Is it always true?
     if not resolution:
         resolution = metadata['Base pair-delimited resolutions'][-1]  # This is true for sample data. Is it always true?
@@ -34,7 +34,7 @@ def read_hic(filename, chr1='1', chr2='1', resolution=None):
     def extract(x):
         return(x.binX, x.binY, x.counts)
     converted_data = np.array(list(map(extract, hic_data)), dtype=np.int64)
-    data = Data(x=converted_data[:,0]//10000,
-                y=converted_data[:,1]//10000,
+    data = Data(chr1=converted_data[:,0]//10000,
+                chr2=converted_data[:,1]//10000,
                 counts=converted_data[:,2])
     return data

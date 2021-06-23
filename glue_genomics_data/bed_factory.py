@@ -1,6 +1,6 @@
 from glue.config import data_factory
 from glue.core import Data
-from pyranges import read_bed
+import pyranges as pr
 from pathlib import Path
 
 
@@ -16,7 +16,7 @@ def read_bed(file_name):
     """
     Read a bed file into glue.
     """
-    bed_data = read_bed(file_name, as_df=True)
+    bed_data = pr.read_bed(file_name, as_df=True)
 
-    return Data(**{k: bed_data[k] for k in bed_data.colnames}, 
+    return Data(**{k: bed_data[k] for k in bed_data.columns}, 
                 label=Path(file_name).stem)

@@ -45,21 +45,21 @@ def read_matrix(file_name):
     if 'rnaseq' in file_name:
         metadata_index = 'Barcode'
         is_gene_expression = True
-        is_ataq = False
-    elif 'ataq' in file_name:
+        is_atac = False
+    elif 'atac' in file_name:
         metadata_index = 'sample_id'
-        is_ataq = True
+        is_atac = True
         is_gene_expression = False
     df_metadata = pd.read_csv(metadata_file, sep='\t').set_index(metadata_index)  # index is Barcode in one file and sample_id in the other
     df_metadata.columns = df_metadata.columns.str.lower()  # For consistency
     df_counts = pd.read_csv(matrix_file, sep='\t')
-    if is_ataq:
-        ataq_ids = df_counts.index.values
+    if is_atac:
+        atac_ids = df_counts.index.values
         chr = df_counts['chr']
         starts = df_counts['start']
         ends = df_counts['end']
         df_counts.drop(['peak_id', 'chr', 'start', 'end'], axis=1, inplace=True)
-        ataq_ids_array = np.outer(ataq_ids, np.ones(df_counts.shape[1])).astype('int')
+        atac_ids_array = np.outer(atac_ids, np.ones(df_counts.shape[1])).astype('int')
     counts_data = np.array(df_counts)
     if is_gene_expression:
         gene_numbers = [int(x[7:]) for x in df_counts.index.values]  # Not general
@@ -114,12 +114,12 @@ def read_matrix(file_name):
         return Data(counts=counts_data, gene_ids=gene_array,
                     sex=sex_array, diet=diet_array,
                     strain=strain_array, label=data_name)
-    elif is_ataq:
-        return [Data(counts=counts_data, ataq_peak_ids=ataq_ids_array,
+    elif is_atac:
+        return [Data(counts=counts_data, atac_peak_ids=atac_ids_array,
                      sex=sex_array, diet=diet_array,
                      strain=strain_array, label=data_name),
-                Data(ataq_peak_ids=ataq_ids,
+                Data(atac_peak_ids=atac_ids,
                      chr=chr,
                      start=starts,
                      end=ends,
-                     label='ataq_peaks')]
+                     label='atac_peaks')]

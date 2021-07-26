@@ -2,6 +2,7 @@ from glue.config import data_factory
 from glue.core import Data
 import pandas as pd
 import numpy as np
+from pathlib import Path
 
 
 __all__ = ['is_matrix', 'read_matrix']
@@ -46,11 +47,12 @@ def read_matrix(file_name):
         metadata_index = 'Barcode'
         is_gene_expression = True
         is_atac = False
-    elif 'atac' in file_name:
+    elif 'atac' in file_name or 'ataq' in file_name:
         metadata_index = 'sample_id'
         is_atac = True
         is_gene_expression = False
-    df_metadata = pd.read_csv(metadata_file, sep='\t').set_index(metadata_index)  # index is Barcode in one file and sample_id in the other
+    # index is Barcode in one file and sample_id in the other
+    df_metadata = pd.read_csv(metadata_file, sep='\t').set_index(metadata_index)
     df_metadata.columns = df_metadata.columns.str.lower()  # For consistency
     df_counts = pd.read_csv(matrix_file, sep='\t')
     if is_atac:
@@ -63,7 +65,8 @@ def read_matrix(file_name):
     counts_data = np.array(df_counts)
     if is_gene_expression:
         gene_numbers = [int(x[7:]) for x in df_counts.index.values]  # Not general
-        gene_array = np.outer(gene_numbers, np.ones(df_counts.shape[1])).astype('int')  # Cast as int, not string to avoid limit on 1D categorical components
+        # Cast as int, not string to avoid limit on 1D categorical components
+        gene_array = np.outer(gene_numbers, np.ones(df_counts.shape[1])).astype('int')
 
     def get_sex_encoding(x):
         sex = df_metadata.loc[x, 'sex']
@@ -109,7 +112,7 @@ def read_matrix(file_name):
     diet_array = np.outer(np.ones(df_counts.shape[0]), diet).astype('int')
     strain_array = np.outer(np.ones(df_counts.shape[0]), strain).astype('int')
 
-    data_name = matrix_file[-20:]  # Short name for dataset
+    data_name = Path(matrix_file).stem[:-14]  # Short name for dataset
     if is_gene_expression:
         return Data(counts=counts_data, gene_ids=gene_array,
                     sex=sex_array, diet=diet_array,

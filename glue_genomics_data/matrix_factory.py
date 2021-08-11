@@ -52,7 +52,7 @@ def read_matrix(file_name):
         is_atac = True
         is_gene_expression = False
     # index is Barcode in one file and sample_id in the other
-    df_metadata = pd.read_csv(metadata_file, sep='\t').set_index(metadata_index)
+    df_metadata = pd.read_csv(metadata_file, sep='\t')#.set_index(metadata_index)
     df_metadata.columns = df_metadata.columns.str.lower()  # For consistency
     df_counts = pd.read_csv(matrix_file, sep='\t')
     if is_atac:
@@ -63,12 +63,23 @@ def read_matrix(file_name):
         ends = df_counts['end']
         df_counts.drop(['peak_id', 'chr', 'start', 'end'], axis=1, inplace=True)
         atac_ids_array = np.outer(atac_ids, np.ones(df_counts.shape[1])).astype('int')
+        experiment_id = [int(x[:4]) for x in df_counts.columns]
+        experiment_array = np.broadcast_to(experiment_id,df_counts.shape).astype('int')
+        df_metadata['sample_id'] = [int(x[:4]) for x in df_metadata['sample_id']]
+        
     counts_data = np.array(df_counts)
     if is_gene_expression:
         #gene_array = np.broadcast_to(df_counts.index.values,df_counts.T.shape).T
         gene_numbers = [int(x[7:]) for x in df_counts.index.values]  # Not general
         # Cast as int, not string for performance reasons
         gene_array = np.outer(gene_numbers, np.ones(df_counts.shape[1])).astype('int')
+        df_gene_table = pd.read_csv('three_bears_liver_rnaseq_geneInfo.txt', sep='\t').set_index('gene.id')
+        df_gene_table['gene_ids'] = [int(x[7:]) for x in df_gene_table.index.values]
+        
+        experiment_id = [int(x[5:]) for x in df_counts.columns]
+        experiment_array = np.broadcast_to(experiment_id,df_counts.shape).astype('int')
+        #np.outer(experiment_id, np.ones(df_counts.shape[1])).astype('int')
+        df_metadata['orsam_id'] = [int(x[5:]) for x in df_metadata['barcode']]
 
     def get_sex_encoding(x,numeric=False):
         sex = df_metadata.loc[x, 'sex']
@@ -127,35 +138,32 @@ def read_matrix(file_name):
         else:
             raise Exception("Bad tag found in strain metadata")
 
-    sex = [get_sex_encoding(x) for x in df_counts.columns]
-    diet = [get_diet_encoding(x) for x in df_counts.columns]
-    strain = [get_strain_encoding(x) for x in df_counts.columns]
 
-    sex_array = np.broadcast_to(sex,counts_data.shape)
-    diet_array = np.broadcast_to(diet,counts_data.shape)
-    strain_array = np.broadcast_to(strain,counts_data.shape)
+    def df_to_data(obj,label=None):
+        result = Data(label=label)
+        for c in obj.columns:
+            result.add_component(obj[c], str(c))
+        return result
 
-
-    #sex = [get_sex_encoding(x,numeric=True) for x in df_counts.columns]
-    #diet = [get_diet_encoding(x,numeric=True) for x in df_counts.columns]
-    #strain = [get_strain_encoding(x,numeric=True) for x in df_counts.columns]
-
-    #num_sex_array = np.outer(np.ones(df_counts.shape[0]), sex)#.astype('int')
-    #num_diet_array = np.outer(np.ones(df_counts.shape[0]), diet)#.astype('int')
-    #num_strain_array = np.outer(np.ones(df_counts.shape[0]), strain)#.astype('int')
 
     data_name = Path(matrix_file).stem[:-14]  # Short name for dataset
     if is_gene_expression:
-        return Data(counts=counts_data, gene_ids=gene_array,
-                    sex=sex_array, diet=diet_array,
-                    strain=strain_array, 
-                    label=data_name)
+        return [Data(counts=counts_data, gene_ids=gene_array, exp_ids=experiment_array,
+                    label=data_name),
+                df_to_data(df_metadata,label='rnaseq_metadata'),
+                df_to_data(df_gene_table,label='rnaseq_gene_info')]
+               # Data(geneid=df_gene_table.index.values, symbol=df_gene_table['symbol'],
+                #     entrez_id=df_gene_table['entrez_id'], chr=df_gene_table['chr'],
+                #     start=df_gene_table['start'], end=df_gene_table['end'],
+                #     middle=df_gene_table['middle'],
+                #     strand=df_gene_table['strand'], gene_ids=df_gene_table['gene_ids'],
+                #     label='gene_info_table')]
     elif is_atac:
-        return [Data(counts=counts_data, atac_peak_ids=atac_ids_array,
-                     sex=sex_array, diet=diet_array,
-                     strain=strain_array, label=data_name),
+        return [Data(counts=counts_data, atac_peak_ids=atac_ids_array, exp_ids=experiment_array,
+                     label=data_name),
+                df_to_data(df_metadata,label='atacseq_metadata'),
                 Data(atac_peak_ids=atac_ids,
                      chr=chr,
                      start=starts,
                      end=ends,
-                     label='atac_peaks')]
+                     label='atacseq_peak_info')]

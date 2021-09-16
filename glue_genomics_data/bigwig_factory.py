@@ -28,7 +28,7 @@ def read_bigwig(file_name):
     that only relevant information is loaded.
     """
     # TODO: pyranges seem slow, switch to pyBigWig?
-    bw_data = pr.read_bigwig(file_name, as_df=True)
+    bw_data = pr.read_bigwig(file_name).as_df()
 
     return Data(**{k: bw_data[k] for k in bw_data.columns}, 
                 label=Path(file_name).stem)

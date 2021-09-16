@@ -22,7 +22,8 @@ class NetworkDataViewer(DataViewer):
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.axes = plt.subplot(1, 1, 1)
+        # Ensure that a new figure object is created upon data viewer creation
+        _, self.axes = plt.subplots()
         self.setCentralWidget(self.axes.figure.canvas)
 
     @property

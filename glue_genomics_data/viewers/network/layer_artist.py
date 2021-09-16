@@ -64,7 +64,7 @@ class NetworkLayerArtist(LayerArtist):
 
         nx.draw(G, pos=render_layout(G), ax=self.axes, 
                 with_labels=False, width=weights, 
-                node_size=[v * 20 + 10 for v in d.values()], 
+                node_size=[v * 20 + 20 for v in d.values()], 
                 node_color=['red' if 'index' in n else 'blue' for n in G],
                 edgecolors='black', linewidths=1)
 

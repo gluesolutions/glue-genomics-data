@@ -22,7 +22,7 @@ def is_matrix(filename, **kwargs):
     return matrix_counts or matrix_metadata
 
 
-@data_factory('Matix data loader', is_matrix)
+@data_factory('Matix data loader', is_matrix, priority=999)
 def read_matrix(file_name):
     """
     Read a matrix of results data into glue.

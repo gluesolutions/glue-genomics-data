@@ -3,6 +3,8 @@ from glue.core import Data
 from astropy.table import Table
 from pathlib import Path
 
+from glue_genomics_viewers.data import BedgraphData
+
 
 __all__ = ['is_bedgraph', 'read_bedgraph']
 
@@ -11,22 +13,17 @@ def is_bedgraph(filename, **kwargs):
     return filename.endswith('.bedgraph')
 
 
-@data_factory('BedGraph data loader', is_bedgraph)
+@data_factory('BedGraph data loader', is_bedgraph, priority=999)
 def read_bedgraph(file_name):
     """
     Read a bedgraph file into glue. 
 
-    Notes
-    -----
-    Similar to the bigwig files, this is quite slow with large data. Can look
-    into using the pyBedGraph package to parse a selection of the file, but
-    this would require allowing to load a second chromosome lookup table.
+    Most of the time these are large datasets we want to display
+    on the GenomeTrackViewer and so we load them as the custom
+    BedgraphData type that knows how to handled tiled/multi-resolution
+    data. Although alternatively we could view them as simple 
+    datasets that we might want to filter by strength.
     """
-    bg_data = Table.read(file_name, format='ascii.no_header')
-
-    # It seems to be standard that the first three column names are fixed
-    bg_data.rename_columns(('col1', 'col2', 'col3', 'col4'), 
-                           ('Chromosome', 'Start', 'End', 'Value'))
-
-    return Data(**{k: bg_data[k] for k in bg_data.colnames}, 
-                label=Path(file_name).stem)
+    data = BedgraphData(file_name)
+    data.engine.index() #This returns quickly if file is already indexed
+    return data

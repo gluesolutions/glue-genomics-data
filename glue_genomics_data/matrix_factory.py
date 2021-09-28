@@ -43,7 +43,7 @@ def read_matrix(file_name):
     *_geneInfo.txt
     """
     if 'rnaseq' in file_name:
-        label = 'gene_expression'
+        label = 'rnaseq'
     if is_matrix_counts(file_name):
         df_counts = pd.read_csv(file_name, sep='\t').set_index('gene.id')
         counts_data = np.array(df_counts)
@@ -61,7 +61,7 @@ def read_matrix(file_name):
         d1 = Data(counts=counts_data, 
              gene_ids=gene_array, 
              exp_ids=experiment_array,
-             label=label,
+             label=f"{label}_counts_{Path(file_name).stem}",
              coords=HeatmapCoords(n_dim=2, x_axis_ticks=exp_labels, y_axis_ticks=gene_labels, labels=['Experiment ID','Gene ID']))
         return d1
     elif is_matrix_metadata(file_name):
@@ -70,7 +70,7 @@ def read_matrix(file_name):
         df_metadata.columns = df_metadata.columns.str.lower()  # For consistency
         df_metadata['orsam_id'] = [int(x[5:]) for x in df_metadata['barcode']]
         
-        d2 = df_to_data(df_metadata,label=f'{label}_experiment_metadata')
+        d2 = df_to_data(df_metadata,label=f'{label}_exp_metadata_{Path(file_name).stem}')
         return d2
     elif is_gene_metadata(file_name):
         df_gene_table = pd.read_csv(file_name, sep='\t').set_index('gene.id')
@@ -79,6 +79,6 @@ def read_matrix(file_name):
         df_gene_table['start'] = (df_gene_table['start']*100_000).astype(int)
         df_gene_table['end'] = (df_gene_table['end']*100_000).astype(int)
         df_gene_table['middle'] = (df_gene_table['middle']*100_000).astype(int)
-        d3 = df_to_data(df_gene_table,label=f"{label}_gene_metadata")
+        d3 = df_to_data(df_gene_table,label=f"{label}_gene_metadata_{Path(file_name).stem}")
         return d3
         

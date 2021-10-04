@@ -13,14 +13,16 @@ def is_3dgnome(filename, **kwargs):
 
 def fix_file(filename):
     """
-    By ASCII STL file from 3D GNOME have a broken first line
+    ASCII STL file from 3D GNOME have a broken first line
+    so we patch it into another file, leaving the original
+    untouched
     """
     new_filename = filename.replace('.stl','_fix.stl') # Kludgy
     
     with open(filename,'r') as f:
         first_line = f.readline()
         if 'pixelfacet' in first_line:
-            new_line = first_line.replace('pixelfacet','pixel facet')
+            new_line = first_line.replace('pixelfacet','pixel\nfacet')
             with open(new_filename,'w') as g:
                 g.write(new_line)
                 for line in f:
@@ -34,11 +36,11 @@ def read_3dgnome(file_name):
     """
     Read a 3D GNOME STL file from https://3dgnome.cent.uw.edu.pl into glue
 
-    3D GNOME STL files must be downloaded with the following settings:
+    3D GNOME STL files should be downloaded with the following settings:
     Line Segments = 10000
     Tube Radius = 0
-    Radial Segments = 3
-    Save ASCII STL
+    Radial Segments = 3 <-- Critical
+    Save as ASCII STL
 
     """
     chromosome_length = 198_022_430 #This is human chr3, we need to know this when we load

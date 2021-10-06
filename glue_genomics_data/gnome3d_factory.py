@@ -43,12 +43,15 @@ def read_3dgnome(file_name):
     Save as ASCII STL
 
     """
-    chromosome_length = 198_022_430 #This is human chr3, we need to know this when we load
-                                    #this file to set up the coordinates properly, but it
-                                    #is not generally provided in the datafile. Query user?
+    chromosome = '3'
+    if chromosome == '3':
+        chromosome_length = 198_022_430 #This is human chr3, we need to know this when we load
+                                         #this file to set up the coordinates properly, but it
+                                         #is not generally provided in the datafile. Query user?
     new_filename = fix_file(file_name)
     tube = mesh.Mesh.from_file(new_filename, calculate_normals=False, mode=stl.Mode.ASCII)
     genome_position = np.linspace(0,chromosome_length,num=tube.v0.shape[0]//3) #3 because tube is defined with triangles at smallest radius
-    tubedata = Data(x=tube.v0[:,0][::3],y=tube.v0[:,1][::3],z=tube.v0[:,2][::3],pos=genome_position,label=Path(new_filename).stem)
+    chr_comp = ['chr'+chromosome]*len(genome_position)
+    tubedata = Data(chr=chr_comp, cx=tube.v0[:,0][::3],cy=tube.v0[:,1][::3],cz=tube.v0[:,2][::3],genome_position=genome_position,label=Path(new_filename).stem)
 
     return tubedata

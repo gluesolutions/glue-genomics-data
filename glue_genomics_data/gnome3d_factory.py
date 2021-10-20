@@ -4,6 +4,7 @@ from pathlib import Path
 import stl
 from stl import mesh
 import numpy as np
+from scipy import interpolate
 
 __all__ = ['is_3dgnome', 'read_3dgnome']
 
@@ -48,13 +49,39 @@ def read_3dgnome(file_name):
         chromosome_length = 198_022_430 #This is human chr3, we need to know this when we load
                                          #this file to set up the coordinates properly, but it
                                          #is not generally provided in the datafile. Query user?
+        chromosome_length = 15_988_916 #This is mouse chr3
     new_filename = fix_file(file_name)
     tube = mesh.Mesh.from_file(new_filename, calculate_normals=False, mode=stl.Mode.ASCII)
-    num_genome_steps = tube.v0.shape[0]//3 #3 because tube is defined with triangles at smallest radius
-    genome_stepsize = chromosome_length/num_genome_steps
+    num_genome_steps = tube.v0.shape[0]//6 #6 because this? tube is defined with 6 points for each section
     genome_position = np.linspace(0,chromosome_length,num=num_genome_steps) 
-    chr_comp = ['chr'+chromosome]*len(genome_position)
-    tubedata = Data(chr=chr_comp, cx=tube.v0[:,0][::3],cy=tube.v0[:,1][::3],cz=tube.v0[:,2][::3],genome_position=genome_position,label=Path(new_filename).stem)
-    tubedata.meta = {'genome_stepsize':genome_stepsize}
+    
+    x = tube.v0[:,0][::6]
+    y = tube.v0[:,1][::6]
+    z = tube.v0[:,2][::6]
+    
+    #This interpolation does not look good
+    #fx = interpolate.interp1d(genome_position,x,kind='slinear')
+    #fy = interpolate.interp1d(genome_position,y,kind='slinear')
+    #fz = interpolate.interp1d(genome_position,z,kind='slinear')
+
+    ## This runs, but the linear interpolation does not look good.
+    #num_genome_steps = num_genome_steps*2
+    new_genome = np.linspace(0,chromosome_length,num=num_genome_steps*2)
+
+    #newx = fx(new_genome)
+    #newy = fy(new_genome)
+    #newz = fz(new_genome)
+
+    tck, u = interpolate.splprep([x,y,z],s=0,u=genome_position)
+
+    newx, newy, newz = interpolate.splev(new_genome, tck)
+    #newx, newy, newz = x,y,z
+    chr_comp = ['chr'+chromosome]*len(new_genome)
+
+    tubedata = Data(chr=chr_comp, cx=newx,cy=newy,cz=newz,genome_position=new_genome,label=Path(new_filename).stem)
+    
+    genome_stepsize = chromosome_length/num_genome_steps
+
+    tubedata.meta = {'genome_stepsize':genome_stepsize, 'interp_function':tck}
 
     return tubedata

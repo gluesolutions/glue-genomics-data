@@ -50,8 +50,11 @@ def read_3dgnome(file_name):
                                          #is not generally provided in the datafile. Query user?
     new_filename = fix_file(file_name)
     tube = mesh.Mesh.from_file(new_filename, calculate_normals=False, mode=stl.Mode.ASCII)
-    genome_position = np.linspace(0,chromosome_length,num=tube.v0.shape[0]//3) #3 because tube is defined with triangles at smallest radius
+    num_genome_steps = tube.v0.shape[0]//3 #3 because tube is defined with triangles at smallest radius
+    genome_stepsize = chromosome_length/num_genome_steps
+    genome_position = np.linspace(0,chromosome_length,num=num_genome_steps) 
     chr_comp = ['chr'+chromosome]*len(genome_position)
     tubedata = Data(chr=chr_comp, cx=tube.v0[:,0][::3],cy=tube.v0[:,1][::3],cz=tube.v0[:,2][::3],genome_position=genome_position,label=Path(new_filename).stem)
+    tubedata.meta = {'genome_stepsize':genome_stepsize}
 
     return tubedata

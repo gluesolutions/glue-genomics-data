@@ -7,4 +7,3 @@ def setup():
     from .gnome3d_factory import read_3dgnome #noqa
     from .peak_correlations_factory import read_peak_correlations
 
-    from .viewers.network.data_viewer import NetworkDataViewer # noqa
